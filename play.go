@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
-	"strings"
 	"time"
+
+	"howett.net/plist"
 )
 
 // const (
@@ -16,36 +18,33 @@ import (
 func main() {
 	address := os.Args[1]
 
-	params := []string{
-		"Content-Location: http://192.168.178.22:8000/VID_20130604_223454.mp4",
-		"Start-Position: 0.001",
+	url := Serve()
+	time.Sleep(10 * time.Hour)
+	// url := "http://192.168.178.22:8000/output.mp4"
+
+	params := map[string]string{
+		"Content-Location": url,
+		"Start-Position":   "0.0",
 	}
 
-	body := strings.NewReader(strings.Join(params, "\r\n"))
+	reader, writer := io.Pipe()
+	go func() {
+		defer writer.Close()
+		encoder := plist.NewEncoder(writer)
+		encoder.Encode(params)
+	}()
 
-	// reader, writer := io.Pipe()
-	// go func() {
-	//  defer writer.Close()
-	//  // err = jpeg.Encode(writer, img, &jpeg.Options{Quality: 50})
-	//  err = png.Encode(writer, img)
-	//  if err != nil {
-	//    fmt.Println(err)
-	//    return
-	//  }
-
-	//  // resize.Thumbnail(maxWidth, maxHeight uint, img image.Image, interp resize.InterpolationFunction) image.Image
-
-	// }()
 	client := &http.Client{}
 
-	req, err := http.NewRequest(http.MethodPost, "http://"+address+"/play", body)
+	req, err := http.NewRequest(http.MethodPost, "http://"+address+"/play", reader)
 	if err != nil {
 		fmt.Println(err)
 		time.Sleep(1 * time.Second)
 		os.Exit(1)
 	}
-	req.Header.Add("User-Agent", "iTunes/10.6 (Macintosh; Intel Mac OS X 10.7.3) AppleWebKit/535.18.5")
-	req.Header.Add("Content-Type", "text/parameters")
+	req.Header.Add("X-Apple-Device-ID", "0x0C4DE9B8169C")
+	req.Header.Add("User-Agent", "iTunes/12.5.4 (Macintosh; OS X 10.12.2)")
+	req.Header.Add("Content-Type", "application/x-apple-binary-plist")
 
 	resp, err := client.Do(req)
 	if err != nil {

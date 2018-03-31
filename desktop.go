@@ -12,11 +12,6 @@ import (
 	"github.com/kbinani/screenshot"
 )
 
-// const (
-// 	maxWidth  = 1920
-// 	maxHeight = 1080
-// )
-
 func main() {
 	address := os.Args[1]
 
@@ -47,9 +42,6 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-
-			// resize.Thumbnail(maxWidth, maxHeight uint, img image.Image, interp resize.InterpolationFunction) image.Image
-
 		}()
 
 		req, err := http.NewRequest(http.MethodPut, "http://"+address+"/photo", reader)
